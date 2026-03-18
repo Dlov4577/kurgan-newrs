@@ -40,58 +40,69 @@ jobs:
           pkg-config \
           openjdk-17-jdk \
           unzip \
-          wget
+          wget \
+          cmake
     
     - name: Install buildozer
       run: |
         pip install --user buildozer cython
         echo "$HOME/.local/bin" >> $GITHUB_PATH
     
-    - name: Create buildozer.spec
+    - name: Setup Android SDK
       run: |
-        # Создаём buildozer.spec с правильными настройками
-        cat > buildozer.spec << 'EOF'
-        [app]
-        title = Kurgan News
-        package.name = kurgan
-        package.domain = com.kurgan.app
-        source.dir = .
-        source.include_exts = py,png,jpg,kv,atlas,txt,json
-        version = 0.1
-        requirements = python3,requests,pillow
-        orientation = portrait
-        osx.python_version = 3
-        osx.kivy_version = 2.1.0
-        fullscreen = 0
-
-        [buildozer]
-        log_level = 2
-        warn_on_root = 1
-
-        [android]
-        api = 30
-        minapi = 21
-        ndk = 25b
-        android.accept_sdk_license = True
-        android.sdk = 30
-        android.build_tools = 30.0.3
-        EOF
-    
-    - name: Accept Android Licenses
-      run: |
-        # Настройка SDK
-        mkdir -p $HOME/.android
-        touch $HOME/.android/repositories.cfg
+        # Устанавливаем Android SDK
+        mkdir -p $HOME/android-sdk
+        cd $HOME/android-sdk
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip commandlinetools-linux-9477386_latest.zip
+        mkdir -p cmdline-tools/latest
+        mv cmdline-tools/* cmdline-tools/latest/ || true
+        export ANDROID_HOME=$HOME/android-sdk
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
         
         # Принимаем лицензии
-        echo "y" | $ANDROID_HOME/tools/bin/sdkmanager "platforms;android-30" || true
-        echo "y" | $ANDROID_HOME/tools/bin/sdkmanager "build-tools;30.0.3" || true
-        echo "y" | $ANDROID_HOME/tools/bin/sdkmanager "platform-tools" || true
-        echo "y" | $ANDROID_HOME/tools/bin/sdkmanager "ndk;25.2.9519653" || true
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        
+        # Устанавливаем нужные компоненты
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;25.2.9519653"
+    
+    - name: Create buildozer.spec
+      run: |
+        cat > buildozer.spec << 'EOF'
+[app]
+title = Kurgan News
+package.name = kurgan
+package.domain = com.kurgan.app
+source.dir = .
+source.include_exts = py,png,jpg,kv,atlas,txt,json
+version = 0.1
+requirements = python3,requests,pillow
+orientation = portrait
+osx.python_version = 3
+osx.kivy_version = 2.1.0
+fullscreen = 0
+
+[buildozer]
+log_level = 2
+warn_on_root = 1
+
+[android]
+api = 30
+minapi = 21
+ndk = 25b
+android.accept_sdk_license = True
+android.sdk_path = /home/runner/android-sdk
+android.ndk_path = /home/runner/android-sdk/ndk/25.2.9519653
+android.build_tools = 30.0.3
+EOF
     
     - name: Build APK
       run: |
-        # Запускаем сборку
+        export ANDROID_HOME=$HOME/android-sdk
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
         buildozer android debug
     
     - name: Upload APK

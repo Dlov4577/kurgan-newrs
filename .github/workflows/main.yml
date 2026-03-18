@@ -51,31 +51,31 @@ jobs:
       run: |
         # Создаём buildozer.spec с правильными настройками
         cat > buildozer.spec << 'EOF'
-[app]
-title = Kurgan News
-package.name = kurgan
-package.domain = com.kurgan.app
-source.dir = .
-source.include_exts = py,png,jpg,kv,atlas,txt,json
-version = 0.1
-requirements = python3,requests,pillow
-orientation = portrait
-osx.python_version = 3
-osx.kivy_version = 2.1.0
-fullscreen = 0
+        [app]
+        title = Kurgan News
+        package.name = kurgan
+        package.domain = com.kurgan.app
+        source.dir = .
+        source.include_exts = py,png,jpg,kv,atlas,txt,json
+        version = 0.1
+        requirements = python3,requests,pillow
+        orientation = portrait
+        osx.python_version = 3
+        osx.kivy_version = 2.1.0
+        fullscreen = 0
 
-[buildozer]
-log_level = 2
-warn_on_root = 1
+        [buildozer]
+        log_level = 2
+        warn_on_root = 1
 
-[android]
-api = 30
-minapi = 21
-ndk = 25b
-android.accept_sdk_license = True
-android.sdk = 30
-android.build_tools = 30.0.3
-EOF
+        [android]
+        api = 30
+        minapi = 21
+        ndk = 25b
+        android.accept_sdk_license = True
+        android.sdk = 30
+        android.build_tools = 30.0.3
+        EOF
     
     - name: Accept Android Licenses
       run: |
@@ -83,11 +83,11 @@ EOF
         mkdir -p $HOME/.android
         touch $HOME/.android/repositories.cfg
         
-        # Принимаем лицензии для нужных компонентов
-        echo y | $ANDROID_HOME/tools/bin/sdkmanager "platforms;android-30" || true
-        echo y | $ANDROID_HOME/tools/bin/sdkmanager "build-tools;30.0.3" || true
-        echo y | $ANDROID_HOME/tools/bin/sdkmanager "platform-tools" || true
-        echo y | $ANDROID_HOME/tools/bin/sdkmanager "ndk;25.2.9519653" || true
+        # Принимаем лицензии
+        echo "y" | $ANDROID_HOME/tools/bin/sdkmanager "platforms;android-30" || true
+        echo "y" | $ANDROID_HOME/tools/bin/sdkmanager "build-tools;30.0.3" || true
+        echo "y" | $ANDROID_HOME/tools/bin/sdkmanager "platform-tools" || true
+        echo "y" | $ANDROID_HOME/tools/bin/sdkmanager "ndk;25.2.9519653" || true
     
     - name: Build APK
       run: |
@@ -95,7 +95,7 @@ EOF
         buildozer android debug
     
     - name: Upload APK
-      uses: actions/upload-artifact@v4   # <--- ИЗМЕНЕНО НА v4
+      uses: actions/upload-artifact@v4
       with:
         name: kurgan-news-apk
         path: bin/*.apk
